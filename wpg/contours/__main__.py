@@ -3,7 +3,6 @@ import random
 
 import pyfastnoisesimd as fns
 from coloraide import Color
-from coloraide.spaces.okhsv import Okhsv
 
 from ..colors import PALLETES, colors_to_rgba
 from ..utils import PHI_A, PHI_B, date_as_seed
@@ -15,10 +14,6 @@ from .generator import (
     StyleSettings,
 )
 
-try:
-    Color.register(Okhsv())
-except ValueError:
-    pass
 
 rng_seed = date_as_seed()
 # rng_seed = None
@@ -27,6 +22,8 @@ rng = random.Random(rng_seed)
 
 def gen_0():
     """Inset with close lines."""
+    pallete = rng.choice(PALLETES)
+
     settings = ContourSettings(
         seed=rng_seed,
         padding_pct=-0.1,
@@ -37,7 +34,7 @@ def gen_0():
             type_=fns.NoiseType.SimplexFractal,
         ),
         bands=BandsSettings(
-            count=6,
+            count=len(pallete),
             mid=PHI_B,
             spread=0.05,
         ),
@@ -45,23 +42,10 @@ def gen_0():
             fill=False,
             line_width=8.0,
             background_color=(0.1, 0.1, 0.1, 1.0),
+            band_colors=colors_to_rgba(pallete),
         ),
         output="out/contour_0.png",
     )
-
-    band_colors = [
-        Color("okhsv", [300.0 * i / (settings.bands.count - 1), 0.8, 1.0])
-        for i in range(settings.bands.count)
-    ]
-
-    band_colors = Color.steps(
-        band_colors,
-        space="oklab",
-        steps=settings.bands.count,
-    )
-    settings.style.band_colors = [  # type: ignore
-        tuple(color.convert("srgb").coords()) for color in band_colors
-    ]
 
     generator = ContourGenerator(settings)
     generator.generate()

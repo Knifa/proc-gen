@@ -1,4 +1,11 @@
 from coloraide import Color
+from coloraide.spaces.okhsv import Okhsv
+
+
+try:
+    Color.register(Okhsv())
+except ValueError:
+    pass
 
 type RgbaTuple = tuple[float, float, float, float]
 
@@ -18,7 +25,11 @@ def colors_from_pallete_str(pallete_str: str) -> list[RgbaTuple]:
     return [Color(hex_str) for hex_str in pallete_str.split()]
 
 
-PALLETES = [colors_from_pallete_str(pallete_str) for pallete_str in PALLETE_STRINGS]
+PALLETES = [
+    *[colors_from_pallete_str(pallete_str) for pallete_str in PALLETE_STRINGS],
+    # Rainbow
+    [Color("okhsv", [300.0 * i / (8 - 1), 0.8, 1.0]) for i in range(8)],
+]
 
 
 def colors_to_rgba(pallete: list[Color]) -> list[RgbaTuple]:

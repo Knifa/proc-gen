@@ -1,0 +1,43 @@
+body {
+  background-color: rgb(18, 18, 18);
+
+  min-height: 100vh;
+}
+
+#container {
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+  min-height: 100vh;
+}
+
+.img-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+
+  gap: 10px;
+}
+
+
+.img-group a {
+  display: block;
+
+  border: 1px solid rgb(50, 50, 50);
+  transition: border 0.2s;
+
+  width: 30%;
+}
+
+@media (max-width: 800px) {
+  .img-group a {
+    width: 66%;
+  }
+}
+
+.img-group a:hover {
+  border: 1px solid rgb(100, 100, 100);
+}

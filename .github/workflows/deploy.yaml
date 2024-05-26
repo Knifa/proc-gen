@@ -20,14 +20,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          pipx install poetry
+      - run: pipx install poetry
       - uses: actions/setup-python@v5
         with:
           cache: "poetry"
           python-version: "3.12"
       - name: Install dependencies
         run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            gdal
+
           poetry install
 
   # deploy:

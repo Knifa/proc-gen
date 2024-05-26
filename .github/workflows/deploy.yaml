@@ -27,7 +27,7 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: |
-          CFLAGS=$CFLAGS" $(poetry env info --path)/lib/python3.12/site-packages/numpy/core/include" \
+          CFLAGS=$CFLAGS" -I$(poetry env info --path)/lib/python3.12/site-packages/numpy/core/include" \
             poetry install
 
   # deploy:

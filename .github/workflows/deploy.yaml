@@ -25,21 +25,27 @@ jobs:
         with:
           cache: "poetry"
           python-version: "3.12"
-      - name: Install dependencies
-        run: |
+      - run: |
           CFLAGS=$CFLAGS" -I$(poetry env info --path)/lib/python3.12/site-packages/numpy/core/include" \
             poetry install
+      - run: |
+          mkdir out
+          poetry run python -m wpg.contours
+          mv out frontend
+      - uses: actions/upload-package-artifact@v3
+        with:
+          path: frontend
 
-  # deploy:
-  #   environment:
-  #     name: github-pages
-  #     url: ${{ steps.deployment.outputs.page_url }}
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #     - name: Setup Pages
-  #       uses: actions/configure-pages@v5
-  #     - name: Deploy to GitHub Pages
-  #       id: deployment
-  #       uses: actions/deploy-pages@v4
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

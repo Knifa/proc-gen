@@ -10,6 +10,11 @@ pyfastnoisesimd = "^0.4.2"
 scikit-image = "^0.23.2"
 gdal = "^3.8.5"
 scipy = "^1.13.0"
+pycairo = "^1.26.0"
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.4"
+ruff = "^0.4.4"
 
 [build-system]
 requires = ["poetry-core"]

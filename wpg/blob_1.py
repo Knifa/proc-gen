@@ -71,7 +71,10 @@ def alpha_composite(over: np.ndarray, under: np.ndarray) -> np.ndarray:
     under_a = under[:, :, 3]
 
     out_a = over_a + under_a * (1.0 - over_a)
-    out_rgb = (over[:, :, :3] * over_a[:, :, None] + under[:, :, :3] * under_a[:, :, None] * (1.0 - over_a[:, :, None])) / out_a[:, :, None]
+    out_rgb = (
+        over[:, :, :3] * over_a[:, :, None]
+        + under[:, :, :3] * under_a[:, :, None] * (1.0 - over_a[:, :, None])
+    ) / out_a[:, :, None]
 
     out = np.zeros_like(over)
     out[:, :, :3] = out_rgb
@@ -79,10 +82,11 @@ def alpha_composite(over: np.ndarray, under: np.ndarray) -> np.ndarray:
 
     return out
 
+
 noise = fns.Noise()
 noise.noiseType = fns.NoiseType.SimplexFractal
-noise.frequency = 0.002
 noise.fractal.octaves = 2
+noise.frequency = 0.002
 
 noise_img = noise.genAsGrid((HEIGHT, WIDTH))
 noise_img = (noise_img + 1) / 2
@@ -100,8 +104,8 @@ band_colors = []
 band_color_offset = np.random.random() * 360
 band_color_range = np.random.random() * 360
 
-band_color_offset = 180
-band_color_range = 160
+band_color_offset = 0
+band_color_range = 360
 
 for i in range(BANDS):
     hue = band_color_offset + (i / BANDS) * band_color_range
@@ -122,7 +126,7 @@ grad_ys = [
 grad_ys = np.array(grad_ys)
 bands_img[:, :, :3] = grad_ys[:, None, :]
 
-bands_img[:] = 0.2
+bands_img[:] = 0.1
 bands_img[:, :, 3] = 1.0
 
 for i in range(BANDS):

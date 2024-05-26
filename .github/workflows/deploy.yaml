@@ -4,7 +4,12 @@ on:
   push:
     branches: ["main"]
 
+  schedule:
+    - cron: "0 0 * * *"  # every day
+
   workflow_dispatch:
+
+
 
 permissions:
   contents: read

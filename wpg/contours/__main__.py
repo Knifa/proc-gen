@@ -168,7 +168,7 @@ def gen_3():
 
     t = rng.uniform(0.0, 360.0)
     a = Color("okhsv", [t, 0.5, 0.66])
-    b = Color("okhsv", [t + 60.0, 0.4, 0.5])
+    b = Color("okhsv", [t + 80.0, 0.4, 0.5])
 
     grad.add_color_stop_rgba(0.0, *a.convert("srgb"))
     grad.add_color_stop_rgba(1.0, *b.convert("srgb"))

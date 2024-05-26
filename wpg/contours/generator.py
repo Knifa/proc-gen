@@ -92,7 +92,7 @@ class StyleSettings:
     line_width: float = 8.0
     dash: list[float] = dataclasses.field(default_factory=lambda: [])
 
-    background_color: RgbaTuple = (0.0, 0.0, 0.0, 0.0)
+    background_color: RgbaTuple | None = None
     band_colors: Sequence[RgbaTuple] = dataclasses.field(
         default_factory=lambda: [(1.0, 1.0, 1.0, 1.0)]
     )
@@ -142,8 +142,9 @@ class ContourGenerator:
         settings = self.settings
         cr = self.cr
 
-        cr.set_source_rgba(*settings.style.background_color)
-        cr.paint()
+        if settings.style.background_color is not None:
+            cr.set_source_rgba(*settings.style.background_color)
+            cr.paint()
 
         cr.translate(*settings.shape_np / 2)
         cr.scale(1 + settings.padding_pct, 1 + settings.padding_pct)

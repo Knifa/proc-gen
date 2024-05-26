@@ -1,5 +1,6 @@
 import argparse
 import random
+import cairo
 
 import pyfastnoisesimd as fns
 from coloraide import Color
@@ -136,8 +137,55 @@ def gen_2():
     generator.save()
 
 
+def gen_3():
+    """Inset with close lines."""
+    settings = ContourSettings(
+        seed=rng_seed,
+        padding_pct=0.025,
+        noise=NoiseSettings(
+            frequency=3.0,
+            type_=fns.NoiseType.Simplex,
+        ),
+        bands=BandsSettings(
+            count=8,
+            mid=0.5,
+            spread=0.4,
+        ),
+        style=StyleSettings(
+            fill=False,
+            line_width=6.0,
+            band_colors=[(1.0, 1.0, 0.0, 0.33)],
+        ),
+        output="out/contour_3.png",
+    )
+
+    generator = ContourGenerator(settings)
+
+    cr = generator.cr
+    cr.save()
+
+    grad = cairo.LinearGradient(0, 0, 0, settings.size)
+
+    t = rng.uniform(0.0, 360.0)
+    a = Color("okhsv", [t, 0.5, 0.66])
+    b = Color("okhsv", [t + 60.0, 0.4, 0.5])
+
+    grad.add_color_stop_rgba(0.0, *a.convert("srgb"))
+    grad.add_color_stop_rgba(1.0, *b.convert("srgb"))
+
+    cr.set_source(grad)
+    cr.paint()
+
+    cr.restore()
+
+    cr.set_operator(cairo.Operator.HSL_LUMINOSITY)
+
+    generator.generate()
+    generator.save()
+
+
 if __name__ == "__main__":
-    gens = [gen_0, gen_1, gen_2]
+    gens = [gen_0, gen_1, gen_2, gen_3]
 
     parser = argparse.ArgumentParser(description="Generate contour images.")
     parser.add_argument(

@@ -32,11 +32,12 @@ jobs:
           mkdir out
           poetry run python -m wpg.contours
           mv out frontend
-      - uses: actions/upload-package-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: frontend
 
   deploy:
+    needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

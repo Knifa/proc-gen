@@ -1,9 +1,11 @@
+import argparse
 import random
 
 import pyfastnoisesimd as fns
 from coloraide import Color
 from coloraide.spaces.okhsv import Okhsv
 
+from ..colors import PALLETES, colors_to_rgba
 from ..utils import PHI_A, PHI_B, date_as_seed
 from .generator import (
     BandsSettings,
@@ -18,16 +20,17 @@ try:
 except ValueError:
     pass
 
+rng_seed = date_as_seed()
+# rng_seed = None
+rng = random.Random(rng_seed)
 
-rng = random.Random(date_as_seed())
 
-
-def gen_1():
+def gen_0():
     """Inset with close lines."""
     settings = ContourSettings(
+        seed=rng_seed,
         padding_pct=-0.1,
         noise=NoiseSettings(
-            frequency=0.001,
             fractal_gain=0.5,
             fractal_octaves=2,
             fractal_lacunarity=2.0,
@@ -43,7 +46,7 @@ def gen_1():
             line_width=8.0,
             background_color=(0.1, 0.1, 0.1, 1.0),
         ),
-        output="out/contour_1.png",
+        output="out/contour_0.png",
     )
 
     band_colors = [
@@ -80,23 +83,9 @@ def gen_1():
     generator.save()
 
 
-def gen_2():
+def gen_1():
     """Filled waves."""
-    pallete_strs = [
-        "#4a294d #cc8d85 #b56431 #a99245 #69822d #0d4841",
-        "#2a2430 #45749e #9cb1b6 #edd8bb #ecb2a4 #e45453",
-        "#e3813a #ecdd66 #eefff9 #48c8e5 #151521",
-        "#efcfbc #f58835 #efbc05 #5aa14b #50b5a5 #302c28",
-        "#1e2287 #373dcb #3c6bff #3caeff #ffac3c #ffefd9",
-        "#9e5773 #b57d97 #d4c3e9 #b4a8f0 #9270ff",
-        "#44933e #95c053 #dae346 #e6b917 #ec6e6c #d03d50",
-        "#122a34 #214345 #a0a646 #d7bc77 #76604b",
-    ]
-
-    pallete_str = rng.choice(pallete_strs)
-
-    pallete = [Color(hex_str) for hex_str in pallete_str.split()]
-    pallete_rgba = [tuple(color.convert("srgb")) for color in pallete]  # type: ignore
+    pallete = rng.choice(PALLETES)
 
     darkest_color = pallete[0]
     for c in pallete:
@@ -108,8 +97,9 @@ def gen_2():
     bg_color = tuple(bg_color.convert("srgb"))  # type: ignore
 
     settings = ContourSettings(
+        seed=rng_seed,
         noise=NoiseSettings(
-            frequency=0.0015,
+            frequency=4.0,
             type_=fns.NoiseType.Cubic,
         ),
         bands=BandsSettings(
@@ -122,7 +112,37 @@ def gen_2():
         style=StyleSettings(
             fill=True,
             background_color=bg_color,
-            band_colors=pallete_rgba,  # type: ignore
+            band_colors=colors_to_rgba(pallete),
+        ),
+        output="out/contour_1.png",
+    )
+
+    generator = ContourGenerator(settings)
+    generator.generate()
+    generator.save()
+
+
+def gen_2():
+    """Dashed outline."""
+    dark = rng.choice([True, False])
+
+    settings = ContourSettings(
+        seed=rng_seed,
+        padding_pct=0.01,
+        noise=NoiseSettings(
+            type_=fns.NoiseType.Simplex,
+        ),
+        bands=BandsSettings(
+            count=8,
+            mid=0.5,
+            spread=0.4,
+        ),
+        style=StyleSettings(
+            fill=False,
+            line_width=2.5,
+            dash=[16.0 * PHI_A, 16.0 * PHI_B],
+            band_colors=[(1.0, 1.0, 1.0, 0.25) if dark else (0.0, 0.0, 0.0, 0.25)],
+            background_color=((0.1, 0.1, 0.1, 1.0) if dark else (0.8, 0.8, 0.8, 1.0)),
         ),
         output="out/contour_2.png",
     )
@@ -132,30 +152,21 @@ def gen_2():
     generator.save()
 
 
-def gen_3():
-    """Dashed outline."""
-    dark = rng.choice([True, False])
-
-    settings = ContourSettings(
-        padding_pct=0.01,
-        noise=NoiseSettings(frequency=0.001, type_=fns.NoiseType.Simplex),
-        bands=BandsSettings(count=8, mid=0.5, spread=0.4),
-        style=StyleSettings(
-            fill=False,
-            line_width=2.5,
-            dash=[16.0 * PHI_A, 16.0 * PHI_B],
-            band_colors=[(1.0, 1.0, 1.0, 0.25) if dark else (0.0, 0.0, 0.0, 0.25)],
-            background_color=((0.1, 0.1, 0.1, 1.0) if dark else (0.8, 0.8, 0.8, 1.0)),
-        ),
-        output="out/contour_3.png",
-    )
-
-    generator = ContourGenerator(settings)
-    generator.generate()
-    generator.save()
-
-
 if __name__ == "__main__":
-    gen_1()
-    gen_2()
-    gen_3()
+    gens = [gen_0, gen_1, gen_2]
+
+    parser = argparse.ArgumentParser(description="Generate contour images.")
+    parser.add_argument(
+        "--gen",
+        type=int,
+        help="The generator to run.",
+        required=False,
+        choices=range(len(gens)),
+    )
+    args = parser.parse_args()
+
+    if args.gen is not None:
+        gens[args.gen]()
+    else:
+        for gen in gens:
+            gen()

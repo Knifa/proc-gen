@@ -6,6 +6,7 @@ import numpy as np
 import pyfastnoisesimd as fns
 import skimage as ski
 
+from wpg.colors import RgbaTuple
 from wpg.utils import (
     RingList,
     contour_path_from_threshold_img,
@@ -16,16 +17,22 @@ from wpg.utils import (
 @dataclasses.dataclass
 class NoiseSettings:
     type_: fns.NoiseType = fns.NoiseType.SimplexFractal
-    frequency: float = 0.001
+    frequency: float = 2.0
 
     fractal_octaves: int = 2
     fractal_lacunarity: float = 2.0
     fractal_gain: float = 0.5
 
-    def get(self, shape: tuple[int, int], seed: int | None) -> np.ndarray:
+    def get(
+        self,
+        *,
+        seed: int | None,
+        shape: tuple[int, int],
+    ) -> np.ndarray:
         noise = fns.Noise(seed=seed)  # type: ignore
         noise.noiseType = self.type_
         noise.frequency = self.frequency
+        noise.axesScales = (1.0 / shape[0], 1.0 / shape[1], 1.0)
 
         noise.fractal.octaves = self.fractal_octaves
         noise.fractal.lacunarity = self.fractal_lacunarity
@@ -74,12 +81,8 @@ class BandsSettings:
             yield i / (self.count - 1)
 
 
-type ColorValue = tuple[float, float, float, float]
-type ColorSequence = Sequence[ColorValue]
-
-
 class BandColorCallable(Protocol):
-    def __call__(self, *, index: int, index_norm: float, count: int) -> ColorValue: ...
+    def __call__(self, *, index: int, index_norm: float, count: int) -> RgbaTuple: ...
 
 
 @dataclasses.dataclass
@@ -89,8 +92,8 @@ class StyleSettings:
     line_width: float = 8.0
     dash: list[float] = dataclasses.field(default_factory=lambda: [])
 
-    background_color: ColorValue = (0.0, 0.0, 0.0, 0.0)
-    band_colors: ColorSequence | BandColorCallable = dataclasses.field(
+    background_color: RgbaTuple = (0.0, 0.0, 0.0, 0.0)
+    band_colors: Sequence[RgbaTuple] = dataclasses.field(
         default_factory=lambda: [(1.0, 1.0, 1.0, 1.0)]
     )
 
@@ -124,7 +127,7 @@ class ContourGenerator:
     surface: cairo.ImageSurface
     cr: cairo.Context
 
-    band_colors: Sequence[ColorValue]
+    band_colors: Sequence[RgbaTuple]
 
     def __init__(self, settings: ContourSettings):
         self.settings = settings
@@ -133,17 +136,7 @@ class ContourGenerator:
         self.cr = cairo.Context(self.surface)
         self.cr.set_antialias(cairo.ANTIALIAS_BEST)
 
-        band_colors: ColorSequence
-        if callable(settings.style.band_colors):
-            band_colors = [
-                settings.style.band_colors(
-                    index=i, index_norm=n, count=settings.bands.count
-                )
-                for i, n in enumerate(settings.bands.norm())
-            ]
-        else:
-            band_colors = list(settings.style.band_colors)
-        self.band_colors = RingList(band_colors)
+        self.band_colors = RingList(settings.style.band_colors)
 
     def generate(self):
         settings = self.settings
@@ -164,7 +157,10 @@ class ContourGenerator:
             cr.set_line_width(settings.style.line_width)
         cr.set_dash([d * settings.style.line_width for d in settings.style.dash])
 
-        noise_img = settings.noise.get(settings.shape, settings.seed)
+        noise_img = settings.noise.get(
+            seed=settings.seed,
+            shape=settings.shape,
+        )
 
         for i, offsets in enumerate(settings.bands.offsets_thickened()):
             cr.set_source_rgba(*self.band_colors[i])

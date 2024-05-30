@@ -1,6 +1,6 @@
 import collections.abc
 import datetime
-from typing import Generator, Iterator, overload
+from typing import Generator, Iterable, Iterator, overload
 
 import numpy as np
 import skimage as ski
@@ -13,7 +13,7 @@ PHI_B = 1 - PHI_A
 class RingList[T](collections.abc.Sequence):
     _items: list[T]
 
-    def __init__(self, items: list[T]) -> None:
+    def __init__(self, items: Iterable[T]) -> None:
         self._items = list(items)
 
     def index(self, item: T) -> int:

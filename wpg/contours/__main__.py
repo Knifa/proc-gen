@@ -1,7 +1,7 @@
 import argparse
 import random
-import cairo
 
+import cairo
 import pyfastnoisesimd as fns
 from coloraide import Color
 
@@ -14,7 +14,6 @@ from .generator import (
     NoiseSettings,
     StyleSettings,
 )
-
 
 rng_seed = date_as_seed()
 # rng_seed = None
@@ -138,13 +137,13 @@ def gen_2():
 
 
 def gen_3():
-    """Inset with close lines."""
+    """A lovely gradient."""
     settings = ContourSettings(
         seed=rng_seed,
         padding_pct=0.025,
         noise=NoiseSettings(
             frequency=3.0,
-            type_=fns.NoiseType.Simplex,
+            type_=fns.NoiseType.SimplexFractal,
         ),
         bands=BandsSettings(
             count=8,
@@ -153,8 +152,8 @@ def gen_3():
         ),
         style=StyleSettings(
             fill=False,
-            line_width=6.0,
-            band_colors=[(1.0, 1.0, 0.0, 0.33)],
+            line_width=8.0,
+            band_colors=[(0.45, 0.45, 0.45, 1.0)],
         ),
         output="out/contour_3.png",
     )
@@ -162,24 +161,26 @@ def gen_3():
     generator = ContourGenerator(settings)
 
     cr = generator.cr
-    cr.save()
-
-    grad = cairo.LinearGradient(0, 0, 0, settings.size)
+    surf = generator.surface
 
     t = rng.uniform(0.0, 360.0)
-    a = Color("okhsv", [t, 0.5, 0.66])
-    b = Color("okhsv", [t + 80.0, 0.4, 0.5])
+    a = Color("okhsv", [t, 0.7, 0.4])
+    b = Color("okhsv", [t + 90.0, 0.7, 0.4])
+    a_b = Color.interpolate([a, b], space="oklab", out_space="srgb")
+    a_b_y = [a_b(i / settings.size) for i in range(settings.size)]
 
-    grad.add_color_stop_rgba(0.0, *a.convert("srgb"))
-    grad.add_color_stop_rgba(1.0, *b.convert("srgb"))
-
-    cr.set_source(grad)
-    cr.paint()
-
-    cr.restore()
+    surf_data = surf.get_data()
+    stride = surf.get_stride()
+    for y in range(settings.size):
+        col = a_b_y[y]
+        for x in range(settings.size):
+            i = y * stride + x * 4
+            surf_data[i + 0] = int(col[0] * 255)
+            surf_data[i + 1] = int(col[1] * 255)
+            surf_data[i + 2] = int(col[2] * 255)
+            surf_data[i + 3] = 255
 
     cr.set_operator(cairo.Operator.HSL_LUMINOSITY)
-
     generator.generate()
     generator.save()
 

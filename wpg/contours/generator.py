@@ -28,17 +28,18 @@ class NoiseSettings:
         *,
         seed: int | None,
         shape: tuple[int, int],
+        scale: tuple[float, float] = (1.0, 1.0),
     ) -> np.ndarray:
         noise = fns.Noise(seed=seed)  # type: ignore
         noise.noiseType = self.type_
         noise.frequency = self.frequency
-        noise.axesScales = (1.0 / shape[0], 1.0 / shape[1], 1.0)
+        noise.axesScales = (*scale, 1.0)
 
         noise.fractal.octaves = self.fractal_octaves
         noise.fractal.lacunarity = self.fractal_lacunarity
         noise.fractal.gain = self.fractal_gain
 
-        noise_img = noise.genAsGrid(shape)
+        noise_img = noise.genAsGrid(shape, start=(-shape[0] // 2, -shape[1] // 2))
         noise_img = (noise_img + 1) / 2
         noise_img = ski.exposure.rescale_intensity(noise_img)
 
@@ -100,7 +101,9 @@ class StyleSettings:
 
 @dataclasses.dataclass
 class ContourSettings:
-    size: int = 2048
+    width: int = 2048
+    height: int = 2048
+
     output: str = "output.png"
     seed: int | None = date_as_seed()
 
@@ -114,11 +117,22 @@ class ContourSettings:
 
     @property
     def shape(self) -> tuple[int, int]:
-        return (self.size, self.size)
+        return (self.width, self.height)
 
     @property
     def shape_np(self) -> np.ndarray:
         return np.array(self.shape)
+
+    @property
+    def aspect_ratio(self) -> tuple[float, float]:
+        if self.width > self.height:
+            return (1.0, self.height / self.width)
+        else:
+            return (self.width / self.height, 1.0)
+
+    @property
+    def aspect_ratio_np(self) -> np.ndarray:
+        return np.array(self.aspect_ratio)
 
 
 class ContourGenerator:
@@ -158,9 +172,15 @@ class ContourGenerator:
             cr.set_line_width(settings.style.line_width)
         cr.set_dash([d * settings.style.line_width for d in settings.style.dash])
 
+        scale = (
+            1.0 / settings.width * settings.aspect_ratio[0],
+            1.0 / settings.height * settings.aspect_ratio[1],
+        )
+
         noise_img = settings.noise.get(
             seed=settings.seed,
             shape=settings.shape,
+            scale=scale,
         )
 
         for i, offsets in enumerate(settings.bands.offsets_thickened()):

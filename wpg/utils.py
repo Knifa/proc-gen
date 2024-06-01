@@ -1,6 +1,6 @@
 import collections.abc
 import datetime
-from typing import Generator, Iterable, Iterator, overload
+from typing import Generator, Generic, Iterable, Iterator, TypeVar, overload
 
 import numpy as np
 import skimage as ski
@@ -10,46 +10,49 @@ PHI_A = 1 / PHI
 PHI_B = 1 - PHI_A
 
 
-class RingList[T](collections.abc.Sequence):
-    _items: list[T]
+RingList_T = TypeVar("RingList_T")
 
-    def __init__(self, items: Iterable[T]) -> None:
-        self._items = list(items)
 
-    def index(self, item: T) -> int:
-        return self._items.index(item)
+class RingList(collections.abc.Sequence, Generic[RingList_T]):
+    _values: list[RingList_T]
 
-    def count(self, item: T) -> int:
-        return self._items.count(item)
+    def __init__(self, iterable: Iterable[RingList_T]) -> None:
+        self._values = list(iterable)
 
-    def __contains__(self, item: T) -> bool:
-        return item in self._items
+    def index(self, value: RingList_T, start=..., stop=...) -> int:
+        return self._values.index(value, start, stop)
+
+    def count(self, value: RingList_T) -> int:
+        return self._values.count(value)
+
+    def __contains__(self, value: object) -> bool:
+        return value in self._values
 
     @overload
-    def __getitem__(self, key: int) -> T: ...
+    def __getitem__(self, key: int) -> RingList_T: ...
     @overload
-    def __getitem__(self, key: slice) -> list[T]: ...
+    def __getitem__(self, key: slice) -> list[RingList_T]: ...
     def __getitem__(self, key):
         if isinstance(key, int):
-            return self._items[key % len(self._items)]
+            return self._values[key % len(self._values)]
         elif isinstance(key, slice):
             return [
-                self._items[i % len(self._items)]
+                self._values[i % len(self._values)]
                 for i in range(
-                    key.start or 0, key.stop or len(self._items), key.step or 1
+                    key.start or 0, key.stop or len(self._values), key.step or 1
                 )
             ]
         else:
             raise TypeError
 
-    def __iter__(self) -> Iterator[T]:
-        return iter(self._items)
+    def __iter__(self) -> Iterator[RingList_T]:
+        return iter(self._values)
 
     def __len__(self) -> int:
-        return len(self._items)
+        return len(self._values)
 
-    def __reversed__(self) -> Iterator[T]:
-        return reversed(self._items)
+    def __reversed__(self) -> Iterator[RingList_T]:
+        return reversed(self._values)
 
 
 def contour_path_from_threshold_img(

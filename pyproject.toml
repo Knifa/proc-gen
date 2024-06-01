@@ -6,14 +6,19 @@ python = "^3.12"
 coloraide = "^3.3.1"
 numpy = "^1.26.4"
 pillow = "^10.3.0"
+pycairo = "^1.26.0"
 pyfastnoisesimd = "^0.4.2"
 scikit-image = "^0.23.2"
 scipy = "^1.13.0"
-pycairo = "^1.26.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.4"
+mypy = "^1.10.0"
 ruff = "^0.4.4"
+
+[[tool.mypy.overrides]]
+module = "pyfastnoisesimd"
+ignore_missing_imports = true
 
 [build-system]
 requires = ["poetry-core"]

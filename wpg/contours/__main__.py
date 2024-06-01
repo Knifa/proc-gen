@@ -5,7 +5,7 @@ import cairo
 import pyfastnoisesimd as fns
 from coloraide import Color
 
-from ..colors import PALLETES, colors_to_rgba
+from ..colors import PALLETES, RgbaTuple, colors_to_rgba
 from ..utils import PHI_A, PHI_B, date_as_seed
 from .generator import (
     BandsSettings,
@@ -20,7 +20,13 @@ rng_seed = date_as_seed()
 rng = random.Random(rng_seed)
 
 
-def gen_0():
+class Args(argparse.Namespace):
+    gen: int
+    width: int | None
+    height: int | None
+
+
+def gen_0(args: Args) -> None:
     """Inset with close lines."""
     pallete = rng.choice(PALLETES)
 
@@ -67,7 +73,7 @@ def gen_0():
     generator.save()
 
 
-def gen_1():
+def gen_1(args: Args) -> None:
     """Filled waves."""
     pallete = rng.choice(PALLETES)
 
@@ -78,9 +84,11 @@ def gen_1():
 
     bg_color = Color(darkest_color).convert("okhsv")
     bg_color["v"] = bg_color["v"] * 0.5
-    bg_color = tuple(bg_color.convert("srgb"))  # type: ignore
+    bg_color_tup: RgbaTuple = tuple(bg_color.convert("srgb"))  # type: ignore
 
     settings = ContourSettings(
+        width=args.width,
+        height=args.height,
         seed=rng_seed,
         noise=NoiseSettings(
             frequency=4.0,
@@ -95,7 +103,7 @@ def gen_1():
         padding_pct=0.01,
         style=StyleSettings(
             fill=True,
-            background_color=bg_color,
+            background_color=bg_color_tup,
             band_colors=colors_to_rgba(pallete),
         ),
         output="out/contour_1.png",
@@ -106,11 +114,13 @@ def gen_1():
     generator.save()
 
 
-def gen_2():
+def gen_2(args: Args) -> None:
     """Dashed outline."""
     dark = rng.choice([True, False])
 
     settings = ContourSettings(
+        width=args.width,
+        height=args.height,
         seed=rng_seed,
         padding_pct=0.01,
         noise=NoiseSettings(
@@ -136,24 +146,26 @@ def gen_2():
     generator.save()
 
 
-def gen_3():
+def gen_3(args: Args) -> None:
     """A lovely gradient."""
     settings = ContourSettings(
+        width=args.width,
+        height=args.height,
         seed=rng_seed,
         padding_pct=0.025,
         noise=NoiseSettings(
-            frequency=3.0,
+            frequency=4.0,
             type_=fns.NoiseType.SimplexFractal,
         ),
         bands=BandsSettings(
-            count=8,
+            count=10,
             mid=0.5,
             spread=0.4,
         ),
         style=StyleSettings(
             fill=False,
             line_width=8.0,
-            band_colors=[(0.45, 0.45, 0.45, 1.0)],
+            band_colors=[(0.4, 0.4, 0.4, 0.5)],
         ),
         output="out/contour_3.png",
     )
@@ -167,13 +179,13 @@ def gen_3():
     a = Color("okhsv", [t, 0.7, 0.4])
     b = Color("okhsv", [t + 90.0, 0.7, 0.4])
     a_b = Color.interpolate([a, b], space="oklab", out_space="srgb")
-    a_b_y = [a_b(i / settings.size) for i in range(settings.size)]
+    a_b_y = [a_b(i / settings.height) for i in range(settings.height)]
 
     surf_data = surf.get_data()
     stride = surf.get_stride()
-    for y in range(settings.size):
+    for y in range(settings.height):
         col = a_b_y[y]
-        for x in range(settings.size):
+        for x in range(settings.width):
             i = y * stride + x * 4
             surf_data[i + 0] = int(col[0] * 255)
             surf_data[i + 1] = int(col[1] * 255)
@@ -196,10 +208,26 @@ if __name__ == "__main__":
         required=False,
         choices=range(len(gens)),
     )
-    args = parser.parse_args()
+
+    parser.add_argument(
+        "--width",
+        type=int,
+        help="The width of the image.",
+        required=False,
+        default=None,
+    )
+    parser.add_argument(
+        "--height",
+        type=int,
+        help="The height of the image.",
+        required=False,
+        default=None,
+    )
+
+    args = parser.parse_args(namespace=Args())
 
     if args.gen is not None:
-        gens[args.gen]()
+        gens[args.gen](args)
     else:
         for gen in gens:
             gen()

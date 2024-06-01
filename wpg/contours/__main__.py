@@ -22,8 +22,8 @@ rng = random.Random(rng_seed)
 
 class Args(argparse.Namespace):
     gen: int
-    width: int | None
-    height: int | None
+    width: int
+    height: int
 
 
 def gen_0(args: Args) -> None:
@@ -31,6 +31,8 @@ def gen_0(args: Args) -> None:
     pallete = rng.choice(PALLETES)
 
     settings = ContourSettings(
+        width=args.width,
+        height=args.height,
         seed=rng_seed,
         padding_pct=-0.1,
         noise=NoiseSettings(
@@ -214,14 +216,14 @@ if __name__ == "__main__":
         type=int,
         help="The width of the image.",
         required=False,
-        default=None,
+        default=2048,
     )
     parser.add_argument(
         "--height",
         type=int,
         help="The height of the image.",
         required=False,
-        default=None,
+        default=2048,
     )
 
     args = parser.parse_args(namespace=Args())

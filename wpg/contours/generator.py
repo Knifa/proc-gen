@@ -161,7 +161,10 @@ class ContourGenerator:
             cr.paint()
 
         cr.translate(*settings.shape_np / 2)
-        cr.scale(1 + settings.padding_pct, 1 + settings.padding_pct)
+        cr.scale(
+            1 + (settings.padding_pct * settings.aspect_ratio[1]),
+            1 + (settings.padding_pct * settings.aspect_ratio[0]),
+        )
         cr.translate(*-settings.shape_np / 2)
 
         cr.set_line_cap(cairo.LINE_CAP_ROUND)

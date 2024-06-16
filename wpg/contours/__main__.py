@@ -6,7 +6,7 @@ import pyfastnoisesimd as fns
 from coloraide import Color
 
 from ..colors import PALLETES, RgbaTuple, colors_to_rgba
-from ..utils import PHI_A, PHI_B, date_as_seed
+from ..utils import PHI_A, PHI_B
 from .generator import (
     BandsSettings,
     ContourGenerator,
@@ -15,8 +15,8 @@ from .generator import (
     StyleSettings,
 )
 
-rng_seed = date_as_seed()
-# rng_seed = None
+# rng_seed = date_as_seed()
+rng_seed = None
 rng = random.Random(rng_seed)
 
 
@@ -100,7 +100,8 @@ def gen_1(args: Args) -> None:
             count=len(pallete),
             mid=rng.choice([0.5, PHI_A, PHI_B]),
             spread=rng.choice([0.1, 0.25, 0.5]),
-            thickness=rng.choice([1.0, PHI_A]),
+            # thickness=rng.choice([1.0, PHI_A]),
+            thickness=1.0,
         ),
         padding_pct=0.01,
         style=StyleSettings(

@@ -1,14 +1,7 @@
 #!/bin/bash
-
-// Adapted from https://github.com/RaitaroH/KDE-Terminal-Wallpaper-Changer/blob/master/ksetwallpaper
+# Adapted from https://github.com/RaitaroH/KDE-Terminal-Wallpaper-Changer/blob/master/ksetwallpaper
 
 set -euo pipefail
-
-# url="https://kawaii.computer/proc-gen/out/contour_3.png"
-# filename=$(basename $url)
-# fullpath=$(realpath $filename)
-
-# curl -O $url
 
 fullpath=$(realpath $1)
 
